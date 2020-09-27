@@ -24,30 +24,47 @@ METIS_INCLUDE_DIRS
 
 #]=======================================================================]
 
+set(METIS_LIBRARIES)
 
-find_library(METIS_LIBRARY
-             NAMES parmetis metis
-             NAMES_PER_DIR
-             PATH_SUFFIXES METIS lib libmetis)
+find_package(PkgConfig QUIET)
+pkg_check_modules(pc_metis metis QUIET)
+
+set(_to_find metis)
+if(parallel IN_LIST METIS_FIND_COMPONENTS)
+  list(PREPEND _to_find parmetis)
+endif()
+
+foreach(_lib ${_to_find})
+  find_library(METIS_${_lib}_LIBRARY
+    NAMES ${_lib}
+    NAMES_PER_DIR
+    PATH_SUFFIXES METIS lib libmetis
+    PATHS ${pc_metis_LIBRARY_DIRS} ${pc_metis_LIBDIR}
+    )
+
+  list(APPEND METIS_LIBRARIES ${METIS_${_lib}_LIBRARY})
+  mark_as_advanced(METIS_${_lib}_LIBRARY)
+endforeach()
 
 find_path(METIS_INCLUDE_DIR
           NAMES parmetis.h metis.h
-          PATH_SUFFIXES METIS include)
+          PATH_SUFFIXES METIS include
+          PATHS ${pc_metis_INCLUDE_DIRS}
+          )
 
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(METIS
-    REQUIRED_VARS METIS_LIBRARY METIS_INCLUDE_DIR)
+    REQUIRED_VARS METIS_LIBRARIES METIS_INCLUDE_DIR)
 
 if(METIS_FOUND)
 # need if _FOUND guard to allow project to autobuild; can't overwrite imported target even if bad
-set(METIS_LIBRARIES ${METIS_LIBRARY})
 set(METIS_INCLUDE_DIRS ${METIS_INCLUDE_DIR})
 
 if(NOT TARGET METIS::METIS)
   add_library(METIS::METIS INTERFACE IMPORTED)
   set_target_properties(METIS::METIS PROPERTIES
-                        INTERFACE_LINK_LIBRARIES "${METIS_LIBRARY}"
+                        INTERFACE_LINK_LIBRARIES "${METIS_LIBRARIES}"
                         INTERFACE_INCLUDE_DIRECTORIES "${METIS_INCLUDE_DIR}"
                       )
 endif()

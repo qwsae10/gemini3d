@@ -45,7 +45,5 @@ else()
   add_subdirectory(src/vendor/mpi_stubs)
 endif(mpi)
 
-# optional, for possible MUMPS speedup
-if(openmp)
+
 find_package(OpenMP COMPONENTS C Fortran)
-endif()

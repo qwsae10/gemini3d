@@ -20,7 +20,7 @@ if(mumps_external)
   return()
 endif()
 
-unset(_mumps_extra)
+set(_mumps_extra)
 
 if(MUMPS_ROOT OR (DEFINED ENV{MUMPS_ROOT}) OR (CMAKE_Fortran_COMPILER_ID STREQUAL GNU))
   set(_comp ${arith})
@@ -44,20 +44,23 @@ else()
   return()
 endif()
 
-if(metis)
-  find_package(METIS REQUIRED)
-  list(APPEND _mumps_extra METIS::METIS)
+find_package(Scotch COMPONENTS ESMUMPS parallel)
+if(Scotch_FOUND)
+list(APPEND _mumps_extra Scotch::Scotch)
 endif()
 
-if(scotch)
-  find_package(Scotch REQUIRED COMPONENTS ESMUMPS)
-  list(APPEND _mumps_extra Scotch::Scotch)
+find_package(METIS COMPONENTS parallel)
+if(METIS_FOUND)
+list(APPEND _mumps_extra METIS::METIS)
 endif()
-# rather than appending libraries everywhere, just put them together here.
-list(APPEND MUMPS_LIBRARIES SCALAPACK::SCALAPACK LAPACK::LAPACK ${_mumps_extra})
+
 if(OpenMP_FOUND)
-  list(APPEND MUMPS_LIBRARIES OpenMP::OpenMP_Fortran OpenMP::OpenMP_C)
+  list(APPEND _mumps_extra OpenMP::OpenMP_Fortran OpenMP::OpenMP_C)
 endif()
+
+# rather than appending libraries everywhere, just put them together here.
+list(APPEND MUMPS_LIBRARIES ${_mumps_extra})
+target_link_libraries(MUMPS::MUMPS INTERFACE ${_mumps_extra})
 
 if(mumps_external OR scalapack_external OR lapack_external OR NOT mpi)
 # pre-build checks can't be used when external library isn't built yet.
@@ -74,6 +77,7 @@ end"
 
 if(NOT MUMPS_link)
   message(STATUS "MUMPS ${MUMPS_LIBRARIES} not working with ${CMAKE_Fortran_COMPILER_ID} ${CMAKE_Fortran_COMPILER_VERSION}")
+  unset(MUMPS::MUMPS)
   if(NOT autobuild)
     message(FATAL_ERROR "autobuild=off, so cannot proceed")
   endif()

@@ -44,20 +44,36 @@
 
 set(Scotch_LIBRARIES)
 
+find_package(PkgConfig QUIET)
+pkg_check_modules(pc_scotch scotch QUIET)
+
 find_path(Scotch_INCLUDE_DIR
           NAMES scotch.h
-          PATH_SUFFIXES include include/scotch)
+          PATH_SUFFIXES include include/scotch
+          PATHS ${pc_scotch_INCLUDE_DIRS})
 
-set(_to_find scotch scotcherrexit)
+set(_to_find scotchmetis)
+if(parallel IN_LIST Scotch_FIND_COMPONENTS)
+  list(PREPEND _to_find ptscotchparmetis)
+  list(APPEND _to_find ptscotch ptscotcherr ptscotcherrexit)
+endif()
+
+list(APPEND _to_find scotch scotcherr scotcherrexit)
+
 if(ESMUMPS IN_LIST Scotch_FIND_COMPONENTS)
-  list(INSERT _to_find 0 esmumps)
+  list(PREPEND _to_find esmumps)
+
+  if(parallel IN_LIST Scotch_FIND_COMPONENTS)
+    list(PREPEND _to_find ptesmumps)
+  endif()
 endif()
 
 foreach(_lib ${_to_find})
   find_library(Scotch_${_lib}_LIBRARY
     NAMES ${_lib}
     NAMES_PER_DIR
-    PATH_SUFFIXES lib lib32 lib64)
+    PATH_SUFFIXES lib lib32 lib64
+    PATHS ${pc_scotch_LIBRARY_DIRS} ${pc_scotch_LIBDIR})
 
   list(APPEND Scotch_LIBRARIES ${Scotch_${_lib}_LIBRARY})
   mark_as_advanced(Scotch_${_lib}_LIBRARY)

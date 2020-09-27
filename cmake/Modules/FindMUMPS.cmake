@@ -35,25 +35,21 @@ if(NOT MUMPS_INCLUDE_DIR)
   return()
 endif()
 
-find_library(MUMPS_COMMON
-             NAMES mumps_common
-             NAMES_PER_DIR
-             DOC "MUMPS common libraries")
-if(NOT MUMPS_COMMON)
-  return()
-endif()
-
 find_library(PORD
-             NAMES pord
+             NAMES mumps_pord pord
              NAMES_PER_DIR
              DOC "simplest MUMPS ordering library")
 if(NOT PORD)
   return()
 endif()
 
+
+set(_tail _mpi)
 if(mpiseq IN_LIST MUMPS_FIND_COMPONENTS)
+  set(_tail _seq)
+
   find_library(MUMPS_mpiseq_LIB
-               NAMES mpiseq
+               NAMES mumps_mpi_seq mpiseq
                NAMES_PER_DIR
                DOC "No-MPI stub library")
   if(NOT MUMPS_mpiseq_LIB)
@@ -63,6 +59,7 @@ if(mpiseq IN_LIST MUMPS_FIND_COMPONENTS)
 
   find_path(MUMPS_mpiseq_INC
             NAMES mpif.h
+            PATH_SUFFIXES mumps mumps/mpi_seq
             DOC "MUMPS mpiseq header")
   if(NOT MUMPS_mpiseq_INC)
     message(WARNING "MUMPS mpiseq mpif.h not found")
@@ -74,13 +71,21 @@ if(mpiseq IN_LIST MUMPS_FIND_COMPONENTS)
   set(MUMPS_mpiseq_INC ${MUMPS_mpiseq_INC} PARENT_SCOPE)
 endif()
 
+find_library(MUMPS_COMMON
+             NAMES mumps_common${_tail} mumps_common
+             NAMES_PER_DIR
+             DOC "MUMPS common libraries")
+if(NOT MUMPS_COMMON)
+  return()
+endif()
+
 foreach(comp ${MUMPS_FIND_COMPONENTS})
   if(comp STREQUAL mpiseq)
     continue()
   endif()
 
   find_library(MUMPS_${comp}_lib
-               NAMES ${comp}mumps
+               NAMES ${comp}mumps${_tail} ${comp}mumps
                NAMES_PER_DIR)
 
   if(NOT MUMPS_${comp}_lib)
