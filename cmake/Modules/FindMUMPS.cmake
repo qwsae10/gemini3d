@@ -38,7 +38,7 @@ if(NOT Fortran IN_LIST enabled_langs)
   return()
 endif()
 
-if(NOT mpiseq IN_LIST MUMPS_FIND_COMPONENTS)
+if(NOT "mpiseq" IN_LIST MUMPS_FIND_COMPONENTS)
   find_package(MPI COMPONENTS C Fortran)
   if(NOT TARGET SCALAPACK::SCALAPACK)
     find_package(SCALAPACK)
@@ -105,7 +105,7 @@ if(DEFINED ENV{MKLROOT})
     HINTS ${MUMPS_ROOT}
     PATH_SUFFIXES lib
     DOC "MUMPS common libraries")
-elseif(mpiseq IN_LIST MUMPS_FIND_COMPONENTS)
+elseif("mpiseq" IN_LIST MUMPS_FIND_COMPONENTS)
   find_library(MUMPS_COMMON
     NAMES mumps_common mumps_common_seq
     NAMES_PER_DIR
@@ -143,7 +143,7 @@ if(NOT PORD)
   return()
 endif()
 
-if(mpiseq IN_LIST MUMPS_FIND_COMPONENTS)
+if("mpiseq" IN_LIST MUMPS_FIND_COMPONENTS)
   if(DEFINED ENV{MKLROOT})
     find_library(MUMPS_mpiseq_LIB
       NAMES mpiseq
@@ -196,7 +196,7 @@ foreach(comp ${MUMPS_FIND_COMPONENTS})
       HINTS ${MUMPS_ROOT}
       PATH_SUFFIXES lib
       DOC "MUMPS precision-specific")
-  elseif(mpiseq IN_LIST MUMPS_FIND_COMPONENTS)
+  elseif("mpiseq" IN_LIST MUMPS_FIND_COMPONENTS)
     find_library(MUMPS_${comp}_lib
       NAMES ${comp}mumps ${comp}mumps_seq
       NAMES_PER_DIR
@@ -270,7 +270,7 @@ if(MUMPS_FOUND)
 # need if _FOUND guard to allow project to autobuild; can't overwrite imported target even if bad
 set(MUMPS_LIBRARIES ${MUMPS_LIBRARY})
 set(MUMPS_INCLUDE_DIRS ${MUMPS_INCLUDE_DIR})
-if(mpiseq IN_LIST MUMPS_FIND_COMPONENTS)
+if("mpiseq" IN_LIST MUMPS_FIND_COMPONENTS)
   list(APPEND MUMPS_LIBRARIES ${MUMPS_mpiseq_LIB})
   list(APPEND MUMPS_INCLUDE_DIRS ${MUMPS_mpiseq_INC})
 endif()
@@ -282,7 +282,7 @@ if(NOT TARGET MUMPS::MUMPS)
     INTERFACE_INCLUDE_DIRECTORIES "${MUMPS_INCLUDE_DIR}")
 endif()
 
-if(mpiseq IN_LIST MUMPS_FIND_COMPONENTS)
+if("mpiseq" IN_LIST MUMPS_FIND_COMPONENTS)
   if(NOT TARGET MUMPS::MPISEQ)
     add_library(MUMPS::MPISEQ INTERFACE IMPORTED)
     set_target_properties(MUMPS::MPISEQ PROPERTIES
