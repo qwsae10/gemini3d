@@ -34,7 +34,8 @@ end interface
 contains
 
 
-function photoionization(x,nn,chi,f107,f107a)
+!> need to add UTsec...  Also need date (ymd from multifluid)...
+function photoionization(x,nn,chi,f107,f107a,t)
 
 !------------------------------------------------------------
 !-------COMPUTE PHOTOIONIZATION RATES PER SOLOMON ET AL, 2005
@@ -56,9 +57,13 @@ real(wp), dimension(size(nn,1),size(nn,2),size(nn,3)) :: nOcol,nN2col,nO2col
 real(wp), dimension(size(nn,1),size(nn,2),size(nn,3)) :: phototmp
 real(wp) :: gavg,H,Tninf
 real(wp), dimension(size(nn,1),size(nn,2),size(nn,3),ll) :: Iflux
+real(wp), dimension(size(nn,1),size(nn,2),size(nn,3)) :: maskval
 
 real(wp) :: Tninftmp
 integer :: iid, ierr
+integer :: ix1,ix2,ix3
+
+real(wp) :: latref,lonref,t
 
 real(wp), dimension(size(nn,1),size(nn,2),size(nn,3),lsp-1) :: photoionization    !don't need a separate rate for electrons
 
@@ -192,8 +197,17 @@ nO2col=nn(:,:,:,3)*H*Chfn
 
 
 !PHOTON FLUX
+
+maskval(:,:,:)=mask(x%glat(:,:,:),x%glon(:,:,:),t)
 do il=1,ll
-  Iflux(:,:,:,il)=Iinf(il)*exp(-(sigmaO(il)*nOcol+sigmaN2(il)*nN2col+sigmaO2(il)*nO2col))
+  do ix3=1,lx3
+    do ix2=1,lx2
+      do ix1=1,lx1
+        Iflux(ix1,ix2,ix3,il)=maskval(ix1,ix2,ix3)*Iinf(il)*exp(-(sigmaO(il)*nOcol(ix1,ix2,ix3)+sigmaN2(il)*nN2col(ix1,ix2,ix3)+ &
+                                sigmaO2(il)*nO2col(ix1,ix2,ix3)))
+      end do
+    end do
+  end do
 end do
 
 
@@ -426,5 +440,41 @@ else
 end if
 
 end subroutine ionrate_glow98
+
+
+!> masking function for eclipse modeling
+elemental real(wp) function mask(lat1,lon1,t) result(val)
+    real(wp), intent(in) :: lat1,lon1
+    real(wp), intent(in) :: t ! input
+    real(wp)             :: Ro,distance,a,lonref,latref
+    Ro=4000
+    
+    if (t<=39120) then
+      lonref=-1.83080595E-10*t**3+1.64481294E-5*t**2-4.58703077E-1*t+4.01939187E3
+      latref=-7.19671597E-7*t**2+6.30138989E-2*t-1.27831497E3
+    else if (t<=39600) then
+      lonref=-3.70904106E-8*t**3+4.55216041E-3*t**2-1.86213961E2*t+2.53904684E6
+      latref=-7.19671597E-7*t**2+6.30138989E-2*t-1.27831497E3
+    else 
+      lonref=-3.70904106E-8*t**3+4.55216041E-3*t**2-1.86213961E2*t+2.53904684E6
+      latref=-4.87899687E-6*t**2+3.82669565E-1*t-7.41458916E3
+    end if
+          
+    a = sin(( latref - lat1)*pi/180 / 2)**2 + cos(lat1*pi/180) * cos(latref*pi/180) * sin((lonref - lon1)*pi/180 / 2)**2
+    distance = re * 2 * atan2(sqrt(a), sqrt(1 - a))
+    if (abs(distance) >= Ro) then
+      val=1
+    else 
+      val=.15+.85*distance/Ro
+    end if
+    
+    if ((t<35500) .or. (t>41280)) then
+      val=1
+    end if 
+
+
+end function
+
+!> new functions implemmenting polyfit for ref locations of eclipse...
 
 end module ionization

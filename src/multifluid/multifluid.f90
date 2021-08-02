@@ -305,7 +305,7 @@ if (mpi_cfg%myid==0 .and. debug) then
     minval(chi)*180/pi, maxval(chi)*180/pi
 end if
 
-Prpreciptmp=photoionization(x,nn,chi,f107,f107a)
+Prpreciptmp=photoionization(x,nn,chi,f107,f107a,UTsec)
 
 if (mpi_cfg%myid==0 .and. debug) then
   print *, 'Min/max root photoionization production rates for time:  ',t,' :  ', &
